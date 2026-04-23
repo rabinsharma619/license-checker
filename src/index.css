@@ -1,0 +1,124 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter var', 'Inter', system-ui, -apple-system, 'Segoe UI', 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(220, 38, 38, 0.06), transparent 40%),
+    radial-gradient(circle at 100% 0%, rgba(29, 78, 216, 0.06), transparent 40%),
+    #f8fafc;
+  background-attachment: fixed;
+}
+
+/* ============ Leaflet marker ============ */
+
+.office-marker {
+  background: none;
+  border: none;
+}
+
+.office-pin {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.office-pin__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(220, 38, 38, 0.25);
+  animation: officePulse 2.2s ease-out infinite;
+}
+
+.office-pin__dot {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  border: 2.5px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes officePulse {
+  0%   { transform: scale(0.6); opacity: 0.8; }
+  70%  { transform: scale(1.6); opacity: 0;   }
+  100% { transform: scale(1.6); opacity: 0;   }
+}
+
+.office-tooltip {
+  background: white !important;
+  border: 1px solid rgb(226 232 240) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+  padding: 8px 10px !important;
+  font-family: inherit !important;
+}
+
+.office-tooltip::before {
+  border-top-color: white !important;
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* ============ Success celebration ============ */
+
+@keyframes circlePop {
+  0%   { transform: scale(0);    opacity: 0;  }
+  60%  { transform: scale(1.12); opacity: 1;  }
+  100% { transform: scale(1);    opacity: 1;  }
+}
+
+@keyframes checkDraw {
+  from { stroke-dashoffset: 60; }
+  to   { stroke-dashoffset: 0;  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.anim-circle-pop {
+  transform-origin: center;
+  animation: circlePop 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.anim-check-draw {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: checkDraw 0.55s ease-out 0.3s forwards;
+}
+
+.anim-fade-up {
+  animation: fadeUp 0.5s ease-out 0.35s both;
+}
+
+.anim-delay-1 {
+  animation-delay: 0.5s;
+}
+
+/* ============ Result card entrance ============ */
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.anim-card-in {
+  animation: cardIn 0.3s ease-out both;
+}
