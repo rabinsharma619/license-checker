@@ -1,15 +1,46 @@
-import { useState, useEffect, useRef } from 'react'
+import { lazy, Suspense, useState, useEffect, useRef } from 'react'
 import SearchBar from './components/SearchBar'
 import ResultCard from './components/ResultCard'
-import OfficeSelector from './components/OfficeSelector'
+import OfficeList from './components/OfficeList'
 import SuccessCelebration from './components/SuccessCelebration'
 import Logo from './components/Logo'
+import NepalEmblem from './components/NepalEmblem'
+import NepalFlag from './components/NepalFlag'
 import { looksLikeLicenseNumber } from './utils/searchUtils'
+
+const OfficeMap = lazy(() => import('./components/OfficeMap'))
+
+function formatRelative(iso) {
+  if (!iso) return null
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return null
+  const diffMs = Date.now() - t
+  const mins = Math.round(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  const days = Math.round(hours / 24)
+  if (days < 30) return `${days} day${days === 1 ? '' : 's'} ago`
+  return new Date(iso).toLocaleDateString()
+}
+
+function formatAbsolute(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString(undefined, {
+    year: 'numeric', month: 'short', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
+}
 
 export default function App() {
   const [stage, setStage] = useState('loading-manifest')
   const [offices, setOffices] = useState([])
   const [totalRecords, setTotalRecords] = useState(0)
+  const [generatedAt, setGeneratedAt] = useState(null)
+  const [homeView, setHomeView] = useState('map')
   const [selectedOffice, setSelectedOffice] = useState(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState(null)
@@ -37,6 +68,7 @@ export default function App() {
       const data = await res.json()
       setOffices(data.offices || [])
       setTotalRecords(data.totalRecords || 0)
+      setGeneratedAt(data.generatedAt || null)
       setStage('pick-office')
     } catch (e) {
       setError(e.message || 'Could not reach server')
@@ -109,6 +141,19 @@ export default function App() {
     setCelebrateKey(k => k + 1)
   }, [shouldCelebrate, selectedOffice, query])
 
+  if (stage === 'pick-office') {
+    return (
+      <HomeFullscreen
+        offices={offices}
+        totalRecords={totalRecords}
+        generatedAt={generatedAt}
+        view={homeView}
+        onChangeView={setHomeView}
+        onSelect={selectOffice}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen text-slate-900">
       <header className="sticky top-0 z-20 backdrop-blur-md bg-gradient-to-r from-red-700/95 via-red-600/95 to-blue-700/95 text-white shadow-lg">
@@ -136,18 +181,6 @@ export default function App() {
             onRetry={selectedOffice ? () => selectOffice(selectedOffice) : loadOffices}
             onBack={selectedOffice ? backToPicker : null}
           />
-        )}
-
-        {stage === 'pick-office' && (
-          <>
-            <StepHeader current={1} total={2}>Select your license office</StepHeader>
-            {totalRecords > 0 && (
-              <p className="text-xs text-slate-500 -mt-2">
-                {totalRecords.toLocaleString()} records across {offices.length} offices · synced from dotm.gov.np
-              </p>
-            )}
-            <OfficeSelector offices={offices} onSelect={selectOffice} />
-          </>
         )}
 
         {stage === 'searching' && selectedOffice && (
@@ -253,6 +286,117 @@ export default function App() {
         </a>{' '}
         · Search runs on our server.
       </footer>
+    </div>
+  )
+}
+
+function HomeFullscreen({ offices, totalRecords, generatedAt, view, onChangeView, onSelect }) {
+  const lastSyncedRel = formatRelative(generatedAt)
+  const lastSyncedAbs = formatAbsolute(generatedAt)
+
+  return (
+    <div className="home-fullscreen text-slate-900">
+      {/* Map / List fills the entire viewport */}
+      <div className="absolute inset-0 z-0">
+        {view === 'map' ? (
+          <Suspense fallback={<HomeMapFallback />}>
+            <OfficeMap
+              offices={offices}
+              onSelect={onSelect}
+              height="100%"
+              scrollWheelZoom={true}
+            />
+          </Suspense>
+        ) : (
+          <div className="h-full w-full overflow-y-auto bg-slate-50/80 backdrop-blur-sm pt-44 sm:pt-36 pb-6 px-4">
+            <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+              <OfficeList offices={offices} onSelect={onSelect} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Floating header with emblem, animated flag, title, and last-sync */}
+      <div className="relative z-10 pointer-events-none">
+        <div className="px-3 sm:px-6 pt-3 sm:pt-5">
+          <div className="home-overlay-card pointer-events-auto rounded-2xl px-3 sm:px-5 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
+            <NepalEmblem className="h-12 w-12 sm:h-14 sm:w-14 flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 truncate">
+                  License Print Status
+                </h1>
+                <NepalFlag className="h-7 sm:h-9" poleHeight={36} />
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-600 truncate">
+                Government of Nepal · Department of Transport Management
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
+                {lastSyncedRel && (
+                  <span
+                    title={lastSyncedAbs}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-0.5 font-medium"
+                  >
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                    </span>
+                    Last synced {lastSyncedRel}
+                  </span>
+                )}
+                {totalRecords > 0 && (
+                  <span className="text-slate-500 tabular-nums">
+                    {totalRecords.toLocaleString()} records · {offices.length} offices
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Map / List toggle */}
+            <div className="hidden sm:flex flex-shrink-0 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
+              <ToggleBtn active={view === 'map'} onClick={() => onChangeView('map')}>Map</ToggleBtn>
+              <ToggleBtn active={view === 'list'} onClick={() => onChangeView('list')}>List</ToggleBtn>
+            </div>
+          </div>
+
+          {/* Mobile: tabs below the header */}
+          <div className="sm:hidden mt-2 home-overlay-card pointer-events-auto rounded-xl p-1 flex text-xs font-semibold">
+            <ToggleBtn active={view === 'map'} onClick={() => onChangeView('map')} fullWidth>Map view</ToggleBtn>
+            <ToggleBtn active={view === 'list'} onClick={() => onChangeView('list')} fullWidth>List view</ToggleBtn>
+          </div>
+        </div>
+
+        {/* Bottom hint */}
+        {view === 'map' && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 home-overlay-card pointer-events-auto rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-slate-700 shadow-sm whitespace-nowrap">
+            Tap a marker to search that office
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ToggleBtn({ active, onClick, children, fullWidth = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${fullWidth ? 'flex-1' : ''} px-3 py-1.5 rounded-lg transition-colors ${
+        active
+          ? 'bg-white text-red-700 shadow-sm'
+          : 'text-slate-600 hover:text-slate-900'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function HomeMapFallback() {
+  return (
+    <div className="h-full w-full flex items-center justify-center bg-slate-100">
+      <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-red-600" />
     </div>
   )
 }

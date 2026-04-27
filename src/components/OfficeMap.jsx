@@ -17,7 +17,7 @@ const officeIcon = L.divIcon({
   iconAnchor: [16, 16],
 })
 
-export default function OfficeMap({ offices, onSelect }) {
+export default function OfficeMap({ offices, onSelect, height = '480px', scrollWheelZoom = false }) {
   const markers = offices
     .map(o => ({ office: o, coords: OFFICE_COORDS[o.shard] }))
     .filter(m => m.coords)
@@ -25,16 +25,16 @@ export default function OfficeMap({ offices, onSelect }) {
   const missing = offices.length - markers.length
 
   return (
-    <div className="relative">
+    <div className="relative h-full w-full">
       <MapContainer
         center={NEPAL_CENTER}
         zoom={7}
-        scrollWheelZoom={false}
+        scrollWheelZoom={scrollWheelZoom}
         minZoom={6}
         maxZoom={12}
         maxBounds={NEPAL_BOUNDS}
         maxBoundsViscosity={1}
-        style={{ height: '480px', width: '100%' }}
+        style={{ height, width: '100%' }}
         attributionControl={false}
       >
         <TileLayer

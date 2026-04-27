@@ -112,6 +112,80 @@ body {
   animation-delay: 0.5s;
 }
 
+/* ============ Nepal flag (waving) ============ */
+
+.nepal-flag {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.25));
+}
+
+.nepal-flag__pole {
+  display: block;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to right, #7c2d12, #b45309, #7c2d12);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.nepal-flag__pole::before {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: #fbbf24;
+  box-shadow: 0 0 0 1px #92400e;
+  transform: translate(-1.5px, -3px);
+}
+
+.nepal-flag__cloth {
+  height: 100%;
+  width: auto;
+  transform-origin: 0% 50%;
+  animation: nepalFlagWave 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes nepalFlagWave {
+  0%   { transform: skewY(0deg)   skewX(0deg)   scaleX(1);    }
+  20%  { transform: skewY(-2deg)  skewX(-2deg)  scaleX(0.985); }
+  45%  { transform: skewY(1.5deg) skewX(2.5deg) scaleX(1.01); }
+  70%  { transform: skewY(-1deg)  skewX(-1.5deg) scaleX(0.99); }
+  100% { transform: skewY(0deg)   skewX(0deg)   scaleX(1);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nepal-flag__cloth {
+    animation: none;
+  }
+}
+
+/* ============ Home full-screen layout ============ */
+
+.home-fullscreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #e7f0fa;
+}
+
+.home-fullscreen .leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.home-overlay-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.18);
+}
+
 /* ============ Result card entrance ============ */
 
 @keyframes cardIn {
